@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Precificação para Designers</title>
+<style>
+  :root{
+    --accent:#4F46E5;
+    --accent-light:#EEF0FE;
+    --accent-dark:#3730A3;
+    --ink:#1A1A2E;
+    --muted:#6B7280;
+    --line:#E5E7EB;
+    --bg:#F7F7FB;
+    --card:#FFFFFF;
+    --good:#059669;
+    --warn:#DC2626;
+    --radius:14px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    line-height:1.5;
+    padding-bottom:60px;
+    -webkit-text-size-adjust:100%;
+  }
+  header.top{
+    background:var(--card);
+    border-bottom:1px solid var(--line);
+    padding:24px 16px 0;
+  }
+  .wrap{
+    max-width:1080px;
+    margin:0 auto;
+  }
+  h1{
+    font-size:1.35rem;
+    margin:0 0 4px;
+    letter-spacing:-0.02em;
+  }
+  .subtitle{
+    color:var(--muted);
+    margin:0 0 20px;
+    font-size:0.92rem;
+    max-width:620px;
+  }
+  nav.tabs{
+    display:flex;
+    gap:2px;
+    width:100%;
+  }
+  nav.tabs button{
+    appearance:none;
+    border:none;
+    background:none;
+    padding:12px 16px;
+    font-size:0.9rem;
+    font-weight:600;
+    color:var(--muted);
+    cursor:pointer;
+    border-bottom:3px solid transparent;
+    transition:color .15s ease;
+    white-space:nowrap;
+    flex:1 1 0;
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  nav.tabs button.active{
+    color:var(--accent);
+    border-bottom-color:var(--accent);
+  }
+  nav.tabs button:hover:not(.active){
+    color:var(--ink);
+  }
+  nav.tabs .tab-short{ display:none; }
+  @media (max-width:640px){
+    nav.tabs button{ font-size:0.78rem; padding:10px 6px; }
+  }
+  @media (max-width:420px){
+    nav.tabs button{ font-size:0.72rem; padding:9px 3px; }
+    nav.tabs .tab-full{ display:none; }
+    nav.tabs .tab-short{ display:inline; }
+  }
+  main{
+    max-width:1080px;
+    margin:0 auto;
+    padding:20px 16px 0;
+  }
+  .panel{ display:none; }
+  .panel.active{ display:block; animation:fade .25s ease; }
+  @keyframes fade{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+
+  .notice{
+    background:var(--accent-light);
+    border:1px solid #D9DBFB;
+    color:var(--accent-dark);
+    border-radius:var(--radius);
+    padding:16px 18px;
+    margin-bottom:20px;
+    font-size:0.86rem;
+    line-height:1.55;
+  }
+  .notice strong{ display:block; margin-bottom:4px; font-size:0.88rem; }
+
+  .guide-card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:24px 24px 4px;
+    max-width:760px;
+  }
+  .guide-intro{
+    color:var(--muted);
+    font-size:0.92rem;
+    line-height:1.6;
+    margin:0 0 24px;
+  }
+  .step{
+    display:flex;
+    gap:16px;
+  }
+  .step-marker{
+    flex:0 0 auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+  .step-num{
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    background:var(--accent-light);
+    color:var(--accent-dark);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    font-size:0.85rem;
+    flex-shrink:0;
+  }
+  .step.milestone-step .step-num{
+    background:#FDE7C7;
+    color:#9A3412;
+  }
+  .step-line{
+    width:2px;
+    flex:1;
+    background:var(--line);
+    margin:4px 0;
+  }
+  .step:last-child .step-line{ display:none; }
+  .step-content{ padding-bottom:22px; }
+  .step-content h3{ margin:4px 0 6px; font-size:0.98rem; }
+  .step-content p{ margin:0; color:var(--muted); font-size:0.87rem; line-height:1.6; max-width:560px; }
+  .step-content .tag{
+    display:inline-block;
+    margin-top:8px;
+    background:var(--accent-light);
+    color:var(--accent-dark);
+    font-size:0.74rem;
+    font-weight:600;
+    padding:3px 9px;
+    border-radius:20px;
+  }
+  .step.milestone-step .step-content .tag{
+    background:#FDE7C7;
+    color:#9A3412;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap:18px;
+    align-items:start;
+  }
+  @media (max-width: 820px){
+    .grid{ grid-template-columns: 1fr; }
+    .results{ position:static !important; }
+  }
+
+  .card{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:20px;
+    margin-bottom:16px;
+  }
+  .card h2{
+    font-size:1rem;
+    margin:0 0 4px;
+  }
+  .card p.hint{
+    color:var(--muted);
+    font-size:0.83rem;
+    margin:0 0 16px;
+  }
+  .field{
+    margin-bottom:14px;
+  }
+  .field:last-child{ margin-bottom:0; }
+  .field label{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    flex-wrap:wrap;
+    gap:2px 8px;
+    font-size:0.85rem;
+    font-weight:600;
+    margin-bottom:6px;
+    color:var(--ink);
+  }
+  .field label .desc{
+    font-weight:400;
+    color:var(--muted);
+    font-size:0.76rem;
+  }
+  .input-money{
+    position:relative;
+  }
+  .input-money::before{
+    content:"R$";
+    position:absolute;
+    left:12px;
+    top:50%;
+    transform:translateY(-50%);
+    color:var(--muted);
+    font-size:0.9rem;
+    pointer-events:none;
+  }
+  input[type=number], input[type=text]{
+    width:100%;
+    padding:11px 12px;
+    border:1px solid var(--line);
+    border-radius:9px;
+    font-size:16px;
+    background:#FAFAFC;
+    color:var(--ink);
+    transition:border-color .15s ease, background .15s ease;
+  }
+  input[type=number]:focus, input[type=text]:focus{
+    outline:none;
+    border-color:var(--accent);
+    background:#fff;
+  }
+  .input-money input{ padding-left:38px; }
+  .suffix-wrap{ position:relative; }
+  .suffix-wrap span.suffix{
+    position:absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-50%);
+    color:var(--muted);
+    font-size:0.85rem;
+    pointer-events:none;
+  }
+  .suffix-wrap input{ padding-right:34px; }
+
+  .row2{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:14px;
+  }
+  .row3{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:14px;
+  }
+  @media (max-width:560px){
+    .row2, .row3{ grid-template-columns:1fr; }
+  }
+
+  .choice-group{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .choice{
+    flex:1 1 130px;
+    border:1px solid var(--line);
+    background:#FAFAFC;
+    border-radius:10px;
+    padding:10px 12px;
+    text-align:center;
+    cursor:pointer;
+    font-size:0.83rem;
+    font-weight:600;
+    color:var(--muted);
+    transition:all .15s ease;
+  }
+  .choice input{ display:none; }
+  .choice.selected{
+    border-color:var(--accent);
+    background:var(--accent-light);
+    color:var(--accent-dark);
+  }
+  .choice .sub{
+    display:block;
+    font-weight:400;
+    font-size:0.72rem;
+    margin-top:2px;
+    opacity:0.85;
+  }
+
+  .phase-subtotal{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:16px;
+    padding-top:14px;
+    border-top:1px dashed var(--line);
+    font-size:0.86rem;
+  }
+  .phase-subtotal .k{ color:var(--muted); font-weight:600; }
+  .phase-subtotal .v{ font-weight:700; color:var(--accent-dark); }
+  .phase-subtotal.milestone{
+    background:#FFF7ED;
+    margin:16px -20px -20px;
+    padding:14px 20px;
+    border-top:1px solid #FDE7C7;
+    border-radius:0 0 var(--radius) var(--radius);
+  }
+  .phase-subtotal.milestone .k{ color:#9A3412; }
+  .phase-subtotal.milestone .v{ color:#9A3412; }
+
+  /* results sidebar */
+  .results{
+    position:sticky;
+    top:16px;
+  }
+  .result-hero{
+    background:linear-gradient(135deg, var(--accent), var(--accent-dark));
+    color:#fff;
+    border-radius:var(--radius);
+    padding:24px 20px;
+    margin-bottom:16px;
+  }
+  .result-hero .label{
+    font-size:0.78rem;
+    opacity:0.85;
+    margin-bottom:6px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  .result-hero .value{
+    font-size:1.9rem;
+    font-weight:700;
+    letter-spacing:-0.02em;
+    word-break:break-word;
+  }
+  .result-hero .value small{
+    font-size:1rem;
+    font-weight:500;
+    opacity:0.85;
+  }
+  .mini-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:16px;
+  }
+  .mini-stat{
+    background:rgba(255,255,255,0.12);
+    border-radius:9px;
+    padding:10px 12px;
+    min-width:0;
+  }
+  .mini-stat .l{ font-size:0.7rem; opacity:0.85; }
+  .mini-stat .v{ font-size:1rem; font-weight:700; margin-top:2px; word-break:break-word; }
+
+  .breakdown{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:18px 20px;
+  }
+  .breakdown h3{
+    font-size:0.82rem;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+    color:var(--muted);
+    margin:0 0 12px;
+  }
+  .b-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    padding:9px 0;
+    border-bottom:1px solid var(--line);
+    font-size:0.86rem;
+  }
+  .b-row:last-child{ border-bottom:none; }
+  .b-row .k{ color:var(--muted); }
+  .b-row .v{ font-weight:600; text-align:right; }
+  .b-row.total .v{ color:var(--accent-dark); font-size:1.02rem; }
+  .b-row.total .k{ color:var(--ink); font-weight:600; }
+  .b-row.sub .k, .b-row.sub .v{ font-size:0.82rem; color:var(--muted); }
+  .b-row.milestone{ background:#FFF7ED; margin:0 -20px; padding:9px 20px; border-bottom-color:#FDE7C7; }
+  .b-row.milestone .k{ color:#9A3412; font-weight:700; }
+  .b-row.milestone .v{ color:#9A3412; font-weight:700; }
+
+  .warn-box{
+    background:#FEF3C7;
+    border:1px solid #FDE68A;
+    color:#92400E;
+    border-radius:10px;
+    padding:12px 14px;
+    font-size:0.8rem;
+    margin-top:14px;
+    display:none;
+  }
+  .warn-box.show{ display:block; }
+
+  .footnote{
+    color:var(--muted);
+    font-size:0.76rem;
+    margin-top:22px;
+    max-width:640px;
+  }
+
+  @media (max-width:480px){
+    .result-hero .value{ font-size:1.6rem; }
+    h1{ font-size:1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <h1>Calculadora de Precificação para Designers</h1>
+    <p class="subtitle">Descubra quanto vale a sua hora de trabalho e use esse número para precificar qualquer projeto com confiança.</p>
+    <nav class="tabs">
+      <button class="active" data-tab="como-usar"><span class="tab-full">1. Como usar esta ferramenta</span><span class="tab-short">Como usar</span></button>
+      <button data-tab="hora"><span class="tab-full">2. Valor da hora</span><span class="tab-short">Valor/hora</span></button>
+      <button data-tab="projeto"><span class="tab-full">3. Preço por projeto</span><span class="tab-short">Preço/projeto</span></button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- TAB 1: COMO USAR ESTA FERRAMENTA -->
+  <section class="panel active" id="panel-como-usar">
+    <div class="guide-card">
+      <p class="guide-intro">Essa ferramenta calcula o seu preço em duas etapas: primeiro o <strong>valor da sua hora</strong> (aba 2), depois o <strong>preço de um projeto</strong> a partir dela (aba 3). O valor da hora é construído em camadas, de baixo pra cima — veja o que cada uma significa antes de preencher os campos.</p>
+
+      <div class="step">
+        <div class="step-marker"><div class="step-num">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h3>Cubra seus custos</h3>
+          <p>Some tudo o que você gasta todo mês pra manter o trabalho rodando, mesmo sem nenhum projeto novo: espaço, softwares, equipamentos, internet, outros. Isso ainda não é o que você ganha — é só o custo de existir como profissional.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-marker"><div class="step-num">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h3>Pague-se</h3>
+          <p>Some o pró-labore: o quanto você quer tirar por mês pra viver, separado dos custos do negócio. Esse é o seu salário.</p>
+        </div>
+      </div>
+
+      <div class="step milestone-step">
+        <div class="step-marker"><div class="step-num">3</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h3>Impostos → ponto de equilíbrio</h3>
+          <p>Cada regime é diferente: se você é MEI, isso costuma ser um valor fixo por mês (o DAS), não uma porcentagem. Se for Simples Nacional ou outro regime baseado em faturamento, use o percentual. Dá pra combinar os dois. O resultado é o seu <strong>ponto de equilíbrio</strong>: o mínimo que você precisa cobrar pra pagar as contas do negócio e se pagar — sem sobrar nem um real de lucro ainda.</p>
+          <span class="tag">Zero lucro até aqui</span>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-marker"><div class="step-num">4</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h3>Margem de lucro</h3>
+          <p>Acrescente uma margem de lucro e reserva. Esse é o primeiro momento em que o negócio realmente lucra — sem essa fase, você só empata, não cresce.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-marker"><div class="step-num">5</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h3>Sua rotina de trabalho</h3>
+          <p>Divida o faturamento necessário pelas horas que você realmente consegue faturar por mês — descontando tempo gasto com orçamentos, e-mails, prospecção e administração. Isso transforma o valor mensal em <strong>valor por hora</strong>.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-marker"><div class="step-num">6</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h3>Posicionamento de mercado</h3>
+          <p>Ajuste esse valor pra cima de acordo com sua experiência, portfólio e demanda. Isso não é uma conta exata — é uma decisão sua.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-marker"><div class="step-num">7</div></div>
+        <div class="step-content">
+          <h3>Precificando um projeto (aba 3)</h3>
+          <p>Com o valor da hora em mãos, multiplique pelas horas estimadas do projeto e ajuste por complexidade e urgência do prazo. O percentual de imposto que você definiu na fase 3 (Simples Nacional, por exemplo) já é aplicado automaticamente sobre o valor daquele projeto — a ferramenta mostra quanto disso é imposto, sem você precisar calcular nada. Só some uma taxa fixa à parte se o seu contador cobrar um valor fixo por nota emitida, além do imposto.</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="footnote">Nenhum desses números é uma verdade absoluta — ajuste conforme a sua experiência, o que o mercado está pagando, e o quanto você quer crescer. Revise os resultados sempre que seus custos ou o mercado mudarem.</p>
+  </section>
+
+  <!-- TAB 2: VALOR DA HORA -->
+  <section class="panel" id="panel-hora">
+
+    <div class="grid">
+      <div>
+
+        <div class="card">
+          <h2>Fase 1 · Cubra seus custos</h2>
+          <p class="hint">Seus gastos fixos por mês para trabalhar.</p>
+
+          <div class="field">
+            <label>Aluguel / coworking / home office <span class="desc">rateio do espaço de trabalho</span></label>
+            <div class="input-money"><input type="number" inputmode="decimal" id="c1" value="0" min="0" step="10"></div>
+          </div>
+          <div class="field">
+            <label>Softwares e assinaturas <span class="desc">Adobe, Figma, fontes, nuvem...</span></label>
+            <div class="input-money"><input type="number" inputmode="decimal" id="c2" value="150" min="0" step="10"></div>
+          </div>
+          <div class="field">
+            <label>Equipamentos <span class="desc">parcela mensal de depreciação (computador, tablet...)</span></label>
+            <div class="input-money"><input type="number" inputmode="decimal" id="c3" value="200" min="0" step="10"></div>
+          </div>
+          <div class="field">
+            <label>Internet, telefone e energia <span class="desc">parte usada para trabalhar</span></label>
+            <div class="input-money"><input type="number" inputmode="decimal" id="c4" value="150" min="0" step="10"></div>
+          </div>
+          <div class="field">
+            <label>Outros custos <span class="desc">contador, cursos, marketing pessoal...</span></label>
+            <div class="input-money"><input type="number" inputmode="decimal" id="c5" value="100" min="0" step="10"></div>
+          </div>
+
+          <div class="phase-subtotal">
+            <div class="k">Fase 1 · custos fixos por mês</div>
+            <div class="v" id="fase1Total">R$ 0</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Fase 2 · Pague-se</h2>
+          <p class="hint">O quanto você quer tirar por mês pra viver.</p>
+          <div class="field">
+            <label>Pró-labore / salário desejado por mês</label>
+            <div class="input-money"><input type="number" inputmode="decimal" id="salario" value="4000" min="0" step="100"></div>
+          </div>
+
+          <div class="phase-subtotal">
+            <div class="k">Fases 1 + 2 · custos + pró-labore</div>
+            <div class="v" id="fase12Total">R$ 0</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Fase 3 · Impostos e taxas</h2>
+          <p class="hint">O seu custo fixo mensal com impostos — de acordo com o seu regime.</p>
+
+          <div class="field">
+            <label>Valor fixo mensal <span class="desc">DAS-MEI, mensalidade de contador...</span></label>
+            <div class="input-money"><input type="number" inputmode="decimal" id="impostoFixo" value="86.05" min="0" step="1"></div>
+          </div>
+
+          <div class="field">
+            <label>Percentual sobre faturamento <span class="desc">Simples Nacional — deixe 0% se for só MEI</span></label>
+            <div class="suffix-wrap"><input type="number" inputmode="decimal" id="impostoPercentual" value="0" min="0" step="0.5"><span class="suffix">%</span></div>
+          </div>
+
+          <div class="warn-box" id="warnBoxImpostos">O percentual está em 100% ou mais. Ajuste o valor para o cálculo funcionar corretamente.</div>
+
+          <div class="phase-subtotal milestone">
+            <div class="k">Ponto de equilíbrio · zero lucro</div>
+            <div class="v" id="pontoEquilibrioTotal">R$ 0</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Fase 4 · Margem de lucro</h2>
+          <p class="hint">Aqui começa o lucro de verdade do negócio.</p>
+          <div class="field">
+            <label>Margem de lucro / reserva <span class="desc">o quanto você quer que sobre além do ponto de equilíbrio</span></label>
+            <div class="suffix-wrap"><input type="number" inputmode="decimal" id="margem" value="15" min="0" step="1"><span class="suffix">%</span></div>
+          </div>
+
+          <div class="warn-box" id="warnBoxMargem">O percentual de margem está em 100% ou mais. Ajuste o valor para o cálculo funcionar corretamente.</div>
+
+          <div class="phase-subtotal">
+            <div class="k">Com margem de lucro · faturamento bruto necessário</div>
+            <div class="v" id="comMargemTotal">R$ 0</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Sua rotina de trabalho</h2>
+          <p class="hint">Transforma o valor mensal em valor por hora.</p>
+          <div class="row3">
+            <div class="field">
+              <label>Dias úteis / mês</label>
+              <input type="number" inputmode="decimal" id="dias" value="22" min="1" max="31" step="1">
+            </div>
+            <div class="field">
+              <label>Horas de trabalho / dia</label>
+              <input type="number" inputmode="decimal" id="horasDia" value="8" min="1" max="16" step="0.5">
+            </div>
+            <div class="field">
+              <label>% do tempo é faturável <span class="desc">o resto é admin/gestão</span></label>
+              <div class="suffix-wrap"><input type="number" inputmode="decimal" id="produtivo" value="60" min="10" max="100" step="5"><span class="suffix">%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Posicionamento de mercado <span class="desc">(por sua conta)</span></h2>
+          <p class="hint">Uma decisão sua — não uma conta exata.</p>
+          <div class="choice-group" id="posicionamentoGroup">
+            <label class="choice selected" data-value="0"><input type="radio" name="posicionamento" value="0" checked>Está começando<span class="sub">sem ajuste</span></label>
+            <label class="choice" data-value="15"><input type="radio" name="posicionamento" value="15">Portfólio consistente<span class="sub">+15%</span></label>
+            <label class="choice" data-value="30"><input type="radio" name="posicionamento" value="30">Procurada no mercado<span class="sub">+30%</span></label>
+            <label class="choice" data-value="50"><input type="radio" name="posicionamento" value="50">Referência / tem fila<span class="sub">+50%</span></label>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="results">
+        <div class="result-hero">
+          <div class="label">Valor sugerido da hora</div>
+          <div class="value" id="valorHoraOut">R$ 0<small>/hora</small></div>
+          <div class="mini-grid">
+            <div class="mini-stat"><div class="l">Ponto de equilíbrio · zero lucro</div><div class="v" id="pontoEquilibrioHoraOut">R$ 0</div></div>
+            <div class="mini-stat"><div class="l">Com margem de lucro</div><div class="v" id="comMargemHoraOut">R$ 0</div></div>
+          </div>
+        </div>
+
+        <div class="breakdown">
+          <h3>Como chegamos nesse número</h3>
+          <div class="b-row sub"><div class="k">Fase 1 — custos fixos</div><div class="v" id="bFase1">R$ 0</div></div>
+          <div class="b-row sub"><div class="k">Fase 2 — pró-labore</div><div class="v" id="bFase2">R$ 0</div></div>
+          <div class="b-row sub"><div class="k">Fase 3 — impostos</div><div class="v" id="bImpostos">+ R$ 0</div></div>
+          <div class="b-row milestone"><div class="k">Ponto de equilíbrio (zero lucro)</div><div class="v" id="bPontoEquilibrio">R$ 0</div></div>
+          <div class="b-row sub"><div class="k">Fase 4 — margem de lucro</div><div class="v" id="bMargem">+ R$ 0</div></div>
+          <div class="b-row milestone"><div class="k">Com margem de lucro</div><div class="v" id="bComMargem">R$ 0</div></div>
+          <div class="b-row"><div class="k">Horas faturáveis por mês</div><div class="v" id="bHoras">0 h</div></div>
+          <div class="b-row sub"><div class="k">Valor da hora — ponto de equilíbrio</div><div class="v" id="bValorHoraPontoEquilibrio">R$ 0</div></div>
+          <div class="b-row sub"><div class="k">Valor da hora — com margem de lucro</div><div class="v" id="bValorHoraComMargem">R$ 0</div></div>
+          <div class="b-row"><div class="k">Ajuste de posicionamento</div><div class="v" id="bAjuste">+0%</div></div>
+          <div class="b-row total"><div class="k">Valor da hora sugerido</div><div class="v" id="bValorHora">R$ 0</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 3: PREÇO POR PROJETO -->
+  <section class="panel" id="panel-projeto">
+    <div class="grid">
+      <div>
+
+        <div class="card">
+          <h2>Valor da sua hora</h2>
+          <p class="hint">Preenchido automaticamente com o valor sugerido da aba anterior — mas você pode ajustar manualmente.</p>
+          <div class="field">
+            <label>Valor / hora</label>
+            <div class="input-money"><input type="number" inputmode="decimal" id="valorHoraProjeto" value="0" min="0" step="5"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Escopo do projeto</h2>
+          <div class="field">
+            <label>Horas estimadas para entregar o projeto</label>
+            <input type="number" inputmode="decimal" id="horasProjeto" value="20" min="0" step="1">
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Complexidade</h2>
+          <p class="hint">O quanto esse projeto exige da sua experiência e repertório.</p>
+          <div class="choice-group" id="complexidadeGroup">
+            <label class="choice selected" data-value="1"><input type="radio" name="complexidade" value="1" checked>Simples<span class="sub">×1.0</span></label>
+            <label class="choice" data-value="1.3"><input type="radio" name="complexidade" value="1.3">Médio<span class="sub">×1.3</span></label>
+            <label class="choice" data-value="1.6"><input type="radio" name="complexidade" value="1.6">Complexo<span class="sub">×1.6</span></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Urgência do prazo</h2>
+          <div class="choice-group" id="urgenciaGroup">
+            <label class="choice selected" data-value="0"><input type="radio" name="urgencia" value="0" checked>Normal<span class="sub">+0%</span></label>
+            <label class="choice" data-value="20"><input type="radio" name="urgencia" value="20">Urgente<span class="sub">+20%</span></label>
+            <label class="choice" data-value="50"><input type="radio" name="urgencia" value="50">Expresso<span class="sub">+50%</span></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Taxa fixa de emissão <span class="desc">(opcional)</span></h2>
+          <p class="hint">Isso é diferente do imposto percentual (que já é calculado sozinho ali no resultado). É só pra quando o contador cobra um valor fixo por nota emitida, além do imposto — deixe R$0 se não for o seu caso.</p>
+          <div class="field">
+            <label>Taxa fixa cobrada por nota <span class="desc">ex: contador cobra R$10/nota</span></label>
+            <div class="input-money"><input type="number" inputmode="decimal" id="custoNotaProjeto" value="0" min="0" step="1"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="results">
+        <div class="result-hero">
+          <div class="label">Preço sugerido do projeto</div>
+          <div class="value" id="precoProjetoOut">R$ 0</div>
+          <div class="mini-grid">
+            <div class="mini-stat"><div class="l">Entrada (50%)</div><div class="v" id="entradaOut">R$ 0</div></div>
+            <div class="mini-stat"><div class="l">Na entrega (50%)</div><div class="v" id="entregaOut">R$ 0</div></div>
+          </div>
+        </div>
+
+        <div class="breakdown">
+          <h3>Como chegamos nesse número</h3>
+          <div class="b-row"><div class="k">Base (horas × valor/hora)</div><div class="v" id="pBase">R$ 0</div></div>
+          <div class="b-row"><div class="k">Ajuste de complexidade</div><div class="v" id="pComplexidade">+ R$ 0</div></div>
+          <div class="b-row"><div class="k">Ajuste de urgência</div><div class="v" id="pUrgencia">+ R$ 0</div></div>
+          <div class="b-row"><div class="k">Taxa fixa de emissão</div><div class="v" id="pNota">+ R$ 0</div></div>
+          <div class="b-row total"><div class="k">Preço final</div><div class="v" id="pTotal">R$ 0</div></div>
+          <div class="b-row sub"><div class="k">↳ imposto deste projeto — já incluso <span id="pImpostoPct"></span></div><div class="v" id="pImposto">R$ 0</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  const fmt = v => "R$ " + (isFinite(v) ? v : 0).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  const fmtPct = v => (v >= 0 ? "+" : "") + v + "%";
+
+  // ---- Tabs ----
+  const tabButtons = document.querySelectorAll('nav.tabs button');
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      $('panel-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ---- Choice groups (posicionamento / complexidade / urgência) ----
+  document.querySelectorAll('.choice-group').forEach(group => {
+    group.querySelectorAll('.choice').forEach(choice => {
+      choice.addEventListener('click', () => {
+        group.querySelectorAll('.choice').forEach(c => c.classList.remove('selected'));
+        choice.classList.add('selected');
+        choice.querySelector('input').checked = true;
+        calcHora();
+        calcProjeto();
+      });
+    });
+  });
+
+  let valorHoraCalculado = 0;
+
+  // ---- Calculo 1: Valor da hora ----
+  const horaInputs = ['c1','c2','c3','c4','c5','salario','impostoFixo','impostoPercentual','margem','dias','horasDia','produtivo'];
+  horaInputs.forEach(id => $(id).addEventListener('input', calcHora));
+
+  function calcHora(){
+    const custos = ['c1','c2','c3','c4','c5'].reduce((s,id) => s + (parseFloat($(id).value) || 0), 0);
+    const salario = parseFloat($('salario').value) || 0;
+    const impostoFixo = parseFloat($('impostoFixo').value) || 0;
+    const impostoPercentual = parseFloat($('impostoPercentual').value) || 0;
+    const margem = parseFloat($('margem').value) || 0;
+    const dias = parseFloat($('dias').value) || 0;
+    const horasDia = parseFloat($('horasDia').value) || 0;
+    const produtivo = (parseFloat($('produtivo').value) || 0) / 100;
+    const posicionamento = parseFloat(document.querySelector('input[name="posicionamento"]:checked').value) || 0;
+
+    const fase1 = custos;
+    const fase12 = custos + salario;
+    const valorFixoImpostos = impostoFixo;
+
+    // Fase 3 — impostos: valor fixo (DAS-MEI, notas) + percentual sobre o faturamento (Simples etc.)
+    const warnImpostos = $('warnBoxImpostos');
+    let pontoEquilibrio;
+    if (impostoPercentual >= 100){
+      warnImpostos.classList.add('show');
+      pontoEquilibrio = fase12 + valorFixoImpostos;
+    } else {
+      warnImpostos.classList.remove('show');
+      pontoEquilibrio = (fase12 + valorFixoImpostos) / (1 - impostoPercentual / 100);
+    }
+    const valorImpostos = pontoEquilibrio - fase12;
+
+    // Fase 4 — margem de lucro: quanto preciso faturar pra sobrar o ponto de equilíbrio depois do lucro
+    const warnMargem = $('warnBoxMargem');
+    let comMargem;
+    if (margem >= 100){
+      warnMargem.classList.add('show');
+      comMargem = pontoEquilibrio;
+    } else {
+      warnMargem.classList.remove('show');
+      comMargem = pontoEquilibrio / (1 - margem / 100);
+    }
+    const valorMargem = comMargem - pontoEquilibrio;
+
+    const horasFaturaveis = dias * horasDia * produtivo;
+    const valorHoraPontoEquilibrio = horasFaturaveis > 0 ? pontoEquilibrio / horasFaturaveis : 0;
+    const valorHoraComMargem = horasFaturaveis > 0 ? comMargem / horasFaturaveis : 0;
+    const valorHoraSugerido = valorHoraComMargem * (1 + posicionamento / 100);
+
+    valorHoraCalculado = valorHoraSugerido;
+
+    // phase subtotals (inline, inside the form cards)
+    $('fase1Total').textContent = fmt(fase1);
+    $('fase12Total').textContent = fmt(fase12);
+    $('pontoEquilibrioTotal').textContent = fmt(pontoEquilibrio);
+    $('comMargemTotal').textContent = fmt(comMargem);
+
+    // hero
+    $('valorHoraOut').innerHTML = fmt(valorHoraSugerido) + '<small>/hora</small>';
+    $('pontoEquilibrioHoraOut').textContent = fmt(valorHoraPontoEquilibrio);
+    $('comMargemHoraOut').textContent = fmt(valorHoraComMargem);
+
+    // breakdown
+    $('bFase1').textContent = fmt(fase1);
+    $('bFase2').textContent = fmt(salario);
+    $('bImpostos').textContent = '+ ' + fmt(valorImpostos);
+    $('bPontoEquilibrio').textContent = fmt(pontoEquilibrio);
+    $('bMargem').textContent = '+ ' + fmt(valorMargem);
+    $('bComMargem').textContent = fmt(comMargem);
+    $('bHoras').textContent = horasFaturaveis.toLocaleString('pt-BR', {maximumFractionDigits:1}) + ' h';
+    $('bValorHoraPontoEquilibrio').textContent = fmt(valorHoraPontoEquilibrio);
+    $('bValorHoraComMargem').textContent = fmt(valorHoraComMargem);
+    $('bAjuste').textContent = fmtPct(posicionamento);
+    $('bValorHora').textContent = fmt(valorHoraSugerido);
+
+    // sync into tab 2 if user hasn't manually overridden it in this session
+    if (!valorHoraProjetoTouched){
+      $('valorHoraProjeto').value = valorHoraSugerido.toFixed(2);
+    }
+    calcProjeto();
+  }
+
+  // ---- Calculo 2: Preço do projeto ----
+  let valorHoraProjetoTouched = false;
+  $('valorHoraProjeto').addEventListener('input', () => {
+    valorHoraProjetoTouched = true;
+    calcProjeto();
+  });
+  ['horasProjeto','custoNotaProjeto'].forEach(id => $(id).addEventListener('input', calcProjeto));
+  $('impostoPercentual').addEventListener('input', calcProjeto);
+
+  function calcProjeto(){
+    const valorHora = parseFloat($('valorHoraProjeto').value) || 0;
+    const horas = parseFloat($('horasProjeto').value) || 0;
+    const complexidade = parseFloat(document.querySelector('input[name="complexidade"]:checked').value) || 1;
+    const urgenciaPct = parseFloat(document.querySelector('input[name="urgencia"]:checked').value) || 0;
+    const custoNota = parseFloat($('custoNotaProjeto').value) || 0;
+    const impostoPercentual = parseFloat($('impostoPercentual').value) || 0;
+
+    const base = horas * valorHora;
+    const comComplexidade = base * complexidade;
+    const ajusteComplexidade = comComplexidade - base;
+    const comUrgencia = comComplexidade * (1 + urgenciaPct / 100);
+    const ajusteUrgencia = comUrgencia - comComplexidade;
+
+    const total = comUrgencia + custoNota;
+    const impostoProjeto = comUrgencia * (impostoPercentual / 100);
+
+    $('precoProjetoOut').textContent = fmt(total);
+    $('entradaOut').textContent = fmt(total / 2);
+    $('entregaOut').textContent = fmt(total / 2);
+
+    $('pBase').textContent = fmt(base);
+    $('pComplexidade').textContent = '+ ' + fmt(ajusteComplexidade);
+    $('pUrgencia').textContent = '+ ' + fmt(ajusteUrgencia);
+    $('pNota').textContent = '+ ' + fmt(custoNota);
+    $('pTotal').textContent = fmt(total);
+    $('pImpostoPct').textContent = '(' + impostoPercentual + '%)';
+    $('pImposto').textContent = fmt(impostoProjeto);
+  }
+
+  calcHora();
+})();
+</script>
+
+</body>
+</html>
